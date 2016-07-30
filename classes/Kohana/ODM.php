@@ -5,7 +5,7 @@ defined('SYSPATH') or die('No direct script access.');
 use MongoDB\BSON\ObjectID;
 use MongoDB\BSON\UTCDateTime;
 
-class Kohana_ODM extends MongoDB\Collection
+class Kohana_ODM extends \MongoDB\Collection
 {
     protected $_id, $_attributes = [], $_relations = [];
     protected static $casts = [], $_db;
@@ -102,7 +102,7 @@ class Kohana_ODM extends MongoDB\Collection
                 $collections[] = static::init($row);
             }
 
-            return new Collection($collections);
+            return new Kohana_ODM_Collection($collections);
         } else {
             return $result->toArray();
         }

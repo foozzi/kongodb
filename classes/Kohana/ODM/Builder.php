@@ -2,7 +2,9 @@
 
 defined('SYSPATH') or die('No direct script access.');
 
-class Kohana_ODM_Builder extends ODM
+use \MongoDB\Collection;
+
+class Kohana_ODM_Builder
 {
     protected $_model, $_modelObject;
 
