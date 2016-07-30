@@ -1,10 +1,11 @@
 <?php
 
 defined('SYSPATH') or die('No direct script access.');
+
 use MongoDB\BSON\ObjectID;
 use MongoDB\BSON\UTCDateTime;
 
-abstract class Kohana_ODM extends \MongoDB\Collection
+class Kohana_ODM extends MongoDB\Collection
 {
     protected $_id, $_attributes = [], $_relations = [];
     protected static $casts = [], $_db;
@@ -19,7 +20,7 @@ abstract class Kohana_ODM extends \MongoDB\Collection
 
     public static function init($attributes = [])
     {
-        $model = (new static(self::set_managet(), static::getDbName(), static::getSource()));
+        $model = (new static(static::set_managet(), static::getDbName(), static::getSource()));
         if (count($attributes) > 0) {
             $model->fill($attributes);
         }
@@ -77,7 +78,7 @@ abstract class Kohana_ODM extends \MongoDB\Collection
     public static function getDbName()
     {
         if (!isset(self::$_db)) {
-            self::$_db = Di::getDefault()->get('config')->mongodb->database;
+            self::$_db = Kohana::$config->load('kongodb')->as_array()['default']['database'];
         }
 
         return self::$_db;
@@ -362,7 +363,7 @@ abstract class Kohana_ODM extends \MongoDB\Collection
     }
     public static function query()
     {
-        return new ODM_Builder(self::set_managet(), static::getDbName(), static::getSource());
+        return new ODM_Builder(static::class);
     }
     public static function __callStatic($name, $arguments)
     {
