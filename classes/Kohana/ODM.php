@@ -42,9 +42,6 @@ class Kohana_ODM extends MongoDB\Collection
 
     public static function create(array $attributes = [])
     {
-        $ai = static::getNextSequence(static::getSource());
-        $attributes[static::getSource().'_id'] = $ai;
-        static::init($attributes);
         return static::$connect->save();
     }
 
@@ -55,10 +52,10 @@ class Kohana_ODM extends MongoDB\Collection
       {
         return 1;
       }
-      return $ret->seq;
+      return ++$ret->seq;
     }
 
-    public function save(array $attributes = null)
+    public function save(array $attributes = null, $ai = false)
     {
         if ($attributes != null) {
             $this->fill($attributes);
@@ -69,6 +66,11 @@ class Kohana_ODM extends MongoDB\Collection
             $this->updateOne(['_id' => $this->_id], ['$set' => $this->_attributes]);
             $this->event('afterUpdate');
         } else {
+            if(Kohana::$config->load('kongodb')->as_array()['default']['ai']) :
+              $ai = static::getNextSequence(static::getSource());
+              $attributes['meta_id'] = $ai;
+              static::init($attributes);
+            endif;
             $this->event('beforeCreate');
             $insertResult = $this->insertOne($this->_attributes);
             $this->_id = $insertResult->getInsertedId();
