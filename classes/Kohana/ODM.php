@@ -42,7 +42,20 @@ class Kohana_ODM extends MongoDB\Collection
 
     public static function create(array $attributes = [])
     {
-        return static::init($attributes)->save();
+        $ai = static::getNextSequence(static::getSource());
+        $attributes[static::getSource().'_id'] = $ai;
+        static::init($attributes);
+        return static::$connect->save();
+    }
+
+    protected static function getNextSequence($name = '')
+    {
+      $ret = static::findAndModify(['_id' => $name], ['$inc' => ['seq' => 1]], ['new' => true, 'upsert' => true]);
+      if(!isset($ret->seq))
+      {
+        return 1;
+      }
+      return $ret->seq;
     }
 
     public function save(array $attributes = null)
@@ -69,12 +82,23 @@ class Kohana_ODM extends MongoDB\Collection
     public static function findById($id)
     {
         $result = static::init()->findOne(['_id' => new ObjectID($id)]);
-
         return $result ? static::init((array) $result) : null;
     }
+
+    public static function findByAI($id)
+    {
+        $result = static::init()->findOne([static::getSource().'_id' => (int)$id]);
+        return $result ? static::init((array) $result) : null;
+    }
+
+    public static function findAndModify($filter = [], $update = [], $options = [])
+    {
+      return static::init()->findOneAndUpdate($filter, $update, $options);
+    }
+
     public static function findFirst(array $params = [])
     {
-        return static::init($params)->fill(static::init()->findOne($params));
+        return static::init($params)->fill(static::init()->findOneAndUpdate($params));
     }
 
     public static function destroy($id)
