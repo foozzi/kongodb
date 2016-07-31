@@ -10,8 +10,23 @@ class Kohana_ODM extends \MongoDB\Collection
     protected $_id, $_attributes = [], $_relations = [];
     protected static $casts = [], $_db;
     public static $relations = [], $globalScopes = [];
+    public static $connect = null;
 
-    protected static function set_managet()
+
+    public static function factory($name = '', $attributes = [])
+    {
+      $model_name = 'Model_'.$name;
+      $model_instance = new $model_name(static::set_manager(), static::getDbName(), static::getSource());
+
+      if (count($attributes) > 0) {
+          $model_instance->fill($attributes);
+      }
+      static::$connect = $model_instance;
+
+      return static::$connect;
+    }
+
+    protected static function set_manager()
     {
         $config = Kohana::$config->load('kongodb')->as_array();
 
@@ -20,11 +35,12 @@ class Kohana_ODM extends \MongoDB\Collection
 
     public static function init($attributes = [])
     {
-        $model = (new static(static::set_managet(), static::getDbName(), static::getSource()));
+        $model = (new static(static::set_manager(), static::getDbName(), static::getSource()));
+
         if (count($attributes) > 0) {
             $model->fill($attributes);
         }
-
+        static::$connect = $model;
         return $model;
     }
 
