@@ -5,22 +5,21 @@ defined('SYSPATH') or die('No direct script access.');
 use MongoDB\BSON\ObjectID;
 use MongoDB\BSON\UTCDateTime;
 
-class Kohana_ODM extends \MongoDB\Collection
+class Kohana_ODM extends MongoDB\Collection
 {
     protected $_id, $_attributes = [], $_relations = [];
     protected static $casts = [], $_db;
     public static $relations = [], $globalScopes = [];
     public static $connect = null;
+    public static $main_model_instance;
 
 
     public static function factory($name = '', $attributes = [])
     {
       $model_name = 'Model_'.$name;
-      $model_instance = new $model_name(static::set_manager(), static::getDbName(), static::getSource());
+      static::$main_model_instance = $model_name;
 
-      if (count($attributes) > 0) {
-          $model_instance->fill($attributes);
-      }
+      $model_instance = new $model_name(static::set_manager(), static::getDbName(), static::getSource());
       static::$connect = $model_instance;
 
       return static::$connect;
@@ -35,16 +34,13 @@ class Kohana_ODM extends \MongoDB\Collection
 
     public static function init($attributes = [])
     {
-        $model = (new static(static::set_manager(), static::getDbName(), static::getSource()));
-
         if (count($attributes) > 0) {
-            $model->fill($attributes);
+            static::$connect->fill($attributes);
         }
-        static::$connect = $model;
-        return $model;
+        return static::$connect;
     }
 
-    public static function create(array $attributes)
+    public static function create(array $attributes = [])
     {
         return static::init($attributes)->save();
     }
@@ -88,7 +84,13 @@ class Kohana_ODM extends \MongoDB\Collection
 
     public static function getSource()
     {
-        return strtolower((new \ReflectionClass(static::class))->getShortName());
+        if(!isset(static::$main_model_instance))
+        {
+          throw new Exception("Main model is not instance", 1);
+        }
+
+        $main = static::$main_model_instance;
+        return $main::getSource();
     }
 
     public static function getDbName()
